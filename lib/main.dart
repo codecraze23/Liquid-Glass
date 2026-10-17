@@ -41,11 +41,55 @@ class GlassMusicApp extends StatelessWidget {
       );
 }
 
-const glassSettings = LiquidGlassSettings(
-  thickness: 18,
-  blur: 8,
-  glassColor: Color(0x1FFFFFFF),
-);
+// Agar shader glass me glitch aaye to false kar do: poora UI frosted glass ban jayega.
+const bool kUseShader = true;
+
+/// iOS-style glass. Chhote/zyada elements ke liye frosted (BackdropFilter),
+/// sirf nav bar + mini player pe real refraction shader.
+class GlassBox extends StatelessWidget {
+  final double radius;
+  final Widget child;
+  final bool shader;
+  const GlassBox({super.key, required this.radius, required this.child, this.shader = false});
+
+  @override
+  Widget build(BuildContext context) {
+    if (shader && kUseShader) {
+      return LiquidGlass.withOwnLayer(
+        settings: const LiquidGlassSettings(
+          thickness: 7,
+          blur: 4,
+          glassColor: Color(0x0FFFFFFF),
+        ),
+        shape: LiquidRoundedSuperellipse(borderRadius: radius),
+        child: child,
+      );
+    }
+    final br = BorderRadius.circular(radius);
+    return ClipRRect(
+      borderRadius: br,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: br,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withOpacity(.22),
+                Colors.white.withOpacity(.06),
+                Colors.white.withOpacity(.12),
+              ],
+            ),
+            border: Border.all(color: Colors.white.withOpacity(.30), width: .9),
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
 
 class Shell extends StatefulWidget {
   const Shell({super.key});
@@ -210,10 +254,7 @@ class GlassNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LiquidGlass.withOwnLayer(
-      settings: glassSettings,
-      shape: LiquidRoundedSuperellipse(borderRadius: 34),
-      child: SizedBox(
+    return GlassBox(radius: 34, shader: true, child: SizedBox(
         height: 68,
         child: LayoutBuilder(builder: (context, box) {
           final w = (box.maxWidth - 12) / items.length;
@@ -299,10 +340,7 @@ class MiniPlayer extends StatelessWidget {
     return Squish(
       amount: .03,
       onTap: onOpen,
-      child: LiquidGlass.withOwnLayer(
-        settings: glassSettings,
-        shape: LiquidRoundedSuperellipse(borderRadius: 30),
-        child: Container(
+      child: GlassBox(radius: 30, shader: true, child: Container(
           height: 62,
           padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Row(
@@ -379,10 +417,7 @@ class GlassCircle extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Squish(
         onTap: onTap,
-        child: LiquidGlass.withOwnLayer(
-          settings: glassSettings,
-          shape: LiquidRoundedSuperellipse(borderRadius: size / 2),
-          child: SizedBox(width: size, height: size, child: Icon(icon, size: size * .5)),
+        child: GlassBox(radius: size / 2, child: SizedBox(width: size, height: size, child: Icon(icon, size: size * .5)),
         ),
       );
 }
@@ -430,10 +465,7 @@ class HomePage extends StatelessWidget {
                     left: 10,
                     right: 10,
                     bottom: 10,
-                    child: LiquidGlass.withOwnLayer(
-                      settings: glassSettings,
-                      shape: LiquidRoundedSuperellipse(borderRadius: 16),
-                      child: Padding(
+                    child: GlassBox(radius: 16, child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         child: Text(songs[i].title,
                             maxLines: 1,
@@ -469,10 +501,7 @@ class SongTile extends StatelessWidget {
       child: Squish(
         amount: .03,
         onTap: onTap,
-        child: LiquidGlass.withOwnLayer(
-          settings: glassSettings,
-          shape: LiquidRoundedSuperellipse(borderRadius: 24),
-          child: Padding(
+        child: GlassBox(radius: 24, child: Padding(
             padding: const EdgeInsets.all(10),
             child: Row(
               children: [
@@ -517,10 +546,7 @@ class LibraryPage extends StatelessWidget {
               child: Squish(
                 amount: .03,
                 onTap: () {},
-                child: LiquidGlass.withOwnLayer(
-                  settings: glassSettings,
-                  shape: LiquidRoundedSuperellipse(borderRadius: 24),
-                  child: Padding(
+                child: GlassBox(radius: 24, child: Padding(
                     padding: const EdgeInsets.all(18),
                     child: Row(children: [
                       Text(t, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
@@ -556,10 +582,7 @@ class _SettingsPageState extends State<SettingsPage> {
           for (final e in on.entries)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
-              child: LiquidGlass.withOwnLayer(
-                settings: glassSettings,
-                shape: LiquidRoundedSuperellipse(borderRadius: 24),
-                child: Padding(
+              child: GlassBox(radius: 24, child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
                   child: Row(children: [
                     Text(e.key, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
@@ -666,10 +689,7 @@ class _NowPlayingState extends State<NowPlaying> {
                 ),
                 const SizedBox(height: 18),
                 // glass progress slider
-                LiquidGlass.withOwnLayer(
-                  settings: glassSettings,
-                  shape: LiquidRoundedSuperellipse(borderRadius: 20),
-                  child: SliderTheme(
+                GlassBox(radius: 20, child: SliderTheme(
                     data: SliderTheme.of(context).copyWith(
                       trackHeight: 6,
                       thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 9),
